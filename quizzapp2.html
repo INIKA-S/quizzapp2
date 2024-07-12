@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Java Quiz</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: blue;
+      color: white;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background-color: white;
+      color: black;
+    }
+    .question {
+      margin-bottom: 20px;
+    }
+    .question h3 {
+      margin-bottom: 10px;
+    }
+    .options {
+      list-style: none;
+      padding: 0;
+    }
+    .options li {
+      margin-bottom: 5px;
+    }
+    .navigation {
+      display: flex;
+      justify-content: space-between;
+    }
+    .navigation button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #timer {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 20px;
+      color: red;
+    }
+    #score-container {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+    #score-container p {
+      font-size: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 id="quiz-title"></h1>
+    <div id="timer"></div>
+    <div id="quiz-container"></div>
+    <div class="navigation" id="navigation-buttons">
+      <button id="previous-button" onclick="navigate(-1)" style="display: none;">Previous</button>
+      <button id="next-button" onclick="navigate(1)">Next</button>
+      <button id="submit-button" onclick="submitQuiz()" style="display: none;">Submit</button>
+    </div>
+    <div id="score-container">
+      <p id="score"></p>
+    </div>
+  </div>
+
+  <script>
+    let currentPage = 0;
+    let timerInterval;
+    const answers = [];
+    let totalScore = 0;
+
+    const quizData = {
+      "quiz": {
+        "title": "Java Quiz",
+        "timer": {
+          "start": true,
+          "duration": "10m"
+        },
+        "pages": [
+          {
+            "pageNumber": 1,
+            "questions": [
+              {
+                "question": "What is the size of int in Java?",
+                "options": ["4 bytes", "2 bytes", "8 bytes", "1 byte"],
+                "answer": "4 bytes"
+              },
+              {
+                "question": "Which of the following is not a Java feature?",
+                "options": ["Object-oriented", "Use of pointers", "Portable", "Dynamic"],
+                "answer": "Use of pointers"
+              },
+              {
+                "question": "Which of these cannot be used for a variable name in Java?",
+                "options": ["identifier", "keyword", "variable", "None of the above"],
+                "answer": "keyword"
+              },
+              {
+                "question": "Which of the following is a reserved keyword in Java?",
+                "options": ["object", "strictfp", "main", "system"],
+                "answer": "strictfp"
+              },
+              {
+                "question": "What is the default value of the local variables?",
+                "options": ["null", "0", "depends on the type", "no default value"],
+                "answer": "no default value"
+              }
+            ],
+            "navigation": {
+              "next": true,
+              "previous": false
+            }
+          },
+          {
+            "pageNumber": 2,
+            "questions": [
+              {
+                "question": "Which method must be implemented by all threads?",
+                "options": ["wait()", "start()", "stop()", "run()"],
+                "answer": "run()"
+              },
+              {
+                "question": "Which of the following is a marker interface?",
+                "options": ["Runnable", "Remote", "Readable", "Result"],
+                "answer": "Remote"
+              },
+              {
+                "question": "What is the return type of the hashCode() method in the Object class?",
+                "options": ["int", "Object", "long", "void"],
+                "answer": "int"
+              },
+              {
+                "question": "Which package contains the Random class?",
+                "options": ["java.util", "java.lang", "java.io", "java.net"],
+                "answer": "java.util"
+              },
+              {
+                "question": "Which keyword is used for accessing the features of a package?",
+                "options": ["package", "import", "extends", "None of the above"],
+                "answer": "import"
+              }
+            ],
+            "navigation": {
+              "next": false,
+              "previous": true,
+              "submit": true
+            }
+          }
+        ]
+      }
+    };
+
+    function startTimer(duration) {
+      let timer = duration, minutes, seconds;
+      timerInterval = setInterval(() => {
+        minutes = parseInt(timer / 60, 10);
+        seconds = parseInt(timer % 60, 10);
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+        document.getElementById('timer').textContent = `${minutes}:${seconds}`;
+        if (--timer < 0) {
+          clearInterval(timerInterval);
+          submitQuiz();
+        }
+      }, 1000);
+    }
+
+    function navigate(direction) {
+      const currentPageData = quizData.quiz.pages[currentPage];
+      saveAnswers(currentPageData.questions);
+      currentPage += direction;
+      renderPage(currentPage);
+    }
+
+    function saveAnswers(questions) {
+      questions.forEach((q, index) => {
+        const selectedOption = document.querySelector(`input[name="question${index}"]:checked`);
+        answers[currentPage * 5 + index] = selectedOption ? selectedOption.value : null;
+      });
+    }
+
+    function submitQuiz() {
+      clearInterval(timerInterval);
+      calculateScore();
+      document.getElementById('quiz-container').style.display = 'none';
+      document.getElementById('navigation-buttons').style.display = 'none';
+      document.getElementById('score-container').style.display = 'block';
+    }
+
+    function calculateScore() {
+      totalScore = 0;
+      quizData.quiz.pages.forEach((page, pageIndex) => {
+        page.questions.forEach((q, qIndex) => {
+          if (answers[pageIndex * 5 + qIndex] === q.answer) {
+            totalScore++;
+          }
+        });
+      });
+      document.getElementById('score').textContent = `Your score is ${totalScore} out of 10`;
+    }
+
+    function renderPage(pageNumber) {
+      const quizContainer = document.getElementById('quiz-container');
+      const navigationButtons = document.getElementById('navigation-buttons');
+      quizContainer.innerHTML = '';
+      const page = quizData.quiz.pages[pageNumber];
+      page.questions.forEach((q, index) => {
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'question';
+        questionDiv.innerHTML = `<h3>${index + 1 + pageNumber * 5}. ${q.question}</h3>`;
+        const optionsList = document.createElement('ul');
+        optionsList.className = 'options';
+        q.options.forEach(option => {
+          const optionItem = document.createElement('li');
+          optionItem.innerHTML = `<label><input type="radio" name="question${index}" value="${option}"> ${option}</label>`;
+          optionsList.appendChild(optionItem);
+        });
+        questionDiv.appendChild(optionsList);
+        quizContainer.appendChild(questionDiv);
+      });
+
+      document.getElementById('previous-button').style.display = page.navigation.previous ? 'inline-block' : 'none';
+      document.getElementById('next-button').style.display = page.navigation.next ? 'inline-block' : 'none';
+      document.getElementById('submit-button').style.display = page.navigation.submit ? 'inline-block' : 'none';
+
+      if (pageNumber === 0 && quizData.quiz.timer.start) {
+        const duration = parseInt(quizData.quiz.timer.duration);
+        startTimer(duration * 60); // Convert minutes to seconds
+      }
+    }
+
+    document.getElementById('quiz-title').textContent = quizData.quiz.title;
+    renderPage(currentPage);
+  </script>
+</body>
+</html>
